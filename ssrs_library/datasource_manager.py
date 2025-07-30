@@ -114,8 +114,6 @@ class SSRSDataSourceManager:
             for ds in data_sources:
                 try:
                     # Test connection by attempting to get data source details
-                    formatted_path = self.client._get_catalog_item_path(item_path)
-
                     payload = {"DataSourceName": ds.id}
 
                     endpoint = f"{RsItemType(rsitem.item_type).value}s({rsitem.id})/Model.CheckDataSourceConnection"
@@ -162,7 +160,7 @@ class SSRSDataSourceManager:
             result = {}
 
             if not data_source:
-                logger.warning(f"No data source")
+                logger.warning("No data source")
                 return False
 
             try:
