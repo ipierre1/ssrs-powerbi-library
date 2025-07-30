@@ -179,8 +179,9 @@ class SSRSDataSourceManager:
                 # Note: SSRS REST API doesn't have a direct "test connection" endpoint
                 # This is a basic connectivity test
                 result = {
-                    "status": response.status_code == 200
-                    and data.get("IsSuccessful", False),
+                    "status": (
+                        response.status_code == 200 and data.get("IsSuccessful", False)
+                    ),
                     "error": data.get("ErrorMessage", None),
                 }
 
