@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ssrs_library"
-version = "0.0.1"
+version = "1.0.0"
 authors = [
   { name="ipierre1", email="59824069+ipierre1@users.noreply.github.com" },
 ]
