@@ -16,7 +16,7 @@ jobs:
       cancel-in-progress: false
 
     outputs:  
-      released: ${{ steps.release.outputs.release }}
+      released: ${{ steps.release.outputs.released }}
 
     permissions:
       contents: write
