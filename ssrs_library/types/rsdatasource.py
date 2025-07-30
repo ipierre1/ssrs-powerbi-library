@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Any
 from .rscredentials import RsCredentials
 
+
 @dataclass
 class RsDataSource:
     name: str

@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class RsItemType(Enum):
     FOLDER = "Folder"
     REPORT = "Report"

@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class DataSourceType(Enum):
     SQL = "SQL"
     OLEDB = "OLEDB"

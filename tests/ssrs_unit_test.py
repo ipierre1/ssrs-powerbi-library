@@ -4,8 +4,7 @@ Unit tests for SSRS Python Library
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
-import json
+from unittest.mock import Mock, patch
 from ssrs_library import (
     SSRSRestClient,
     SSRSDataSourceManager,

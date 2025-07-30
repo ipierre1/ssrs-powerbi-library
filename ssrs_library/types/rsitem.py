@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from .rsitemtype import RsItemType
 
+
 @dataclass
 class RsItem:
     name: str
