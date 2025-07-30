@@ -6,4 +6,4 @@ from .credential_manager import (
     create_no_credentials,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
