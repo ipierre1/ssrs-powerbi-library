@@ -12,6 +12,10 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch all history and tags for semantic-release
+        run: |
+          git fetch --prune --unshallow || true
+          git fetch --tags
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
