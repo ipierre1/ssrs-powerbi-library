@@ -25,6 +25,15 @@ jobs:
           git fetch --prune --unshallow || true
           git fetch --tags
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build release distributions
+        run: |
+          # NOTE: put your own distribution build steps here.
+          python -m pip install build
+
       - name: Action | Semantic Version Release
         id: release
         # Adjust tag with desired version if applicable.
