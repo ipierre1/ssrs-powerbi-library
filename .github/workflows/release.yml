@@ -56,6 +56,10 @@ jobs:
     needs: release
     if: ${{ needs.release.outputs.released == 'true' }}
 
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ssrs-powerbi-library
+
     permissions:
       contents: read
       id-token: write
