@@ -7,4 +7,4 @@ from .credential_manager import (
 )
 from .security_manager import *
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
