@@ -48,7 +48,8 @@ class SSRSSecurityManager:
         try:
             report_name_simple = report_path.split("/")[-1]
             # Use a specific folder ID or search in all folders
-            catalog_items_url = f"Folders(a09ce8a9-8390-4651-9127-d6007e7b29d4)/Model.SearchItems(searchText='{report_name_simple}')"
+            id = "0000000-0000-0000-0000-000000000000"
+            catalog_items_url = f"Folders({id})/Model.SearchItems(searchText='{report_name_simple}')"
 
             response = self.client._make_request("GET", catalog_items_url)
 
