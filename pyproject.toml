@@ -35,7 +35,7 @@ requires = ["setuptools==69.5.1", "requests>=2.31.0", "requests-ntlm>=1.2.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ssrs_library"
+name = "ssrs-powerbi-library"
 version = "1.0.3"
 authors = [
   { name="ipierre1", email="59824069+ipierre1@users.noreply.github.com" },
