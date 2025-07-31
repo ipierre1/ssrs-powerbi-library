@@ -41,45 +41,44 @@ pip install -e .
 
 ---
 
-## 📁 Project Structure
+## 📚 End-User API
 
-```text
-ssrs-powerbi-library/
-│
-├── ssrs_library/
-│   ├── __init__.py
-│   ├── ssrs_library.py         # Main client logic
-│   ├── datasource_manager.py   # Data source management logic
-│   └── types/
-│       ├── __init__.py
-│       ├── rsitemtype.py       # RsItemType enum
-│       ├── datasourcetype.py   # DataSourceType enum
-│       ├── rscredentials.py    # Credentials dataclasses
-│       ├── rsdatasource.py     # RsDataSource dataclass
-│       └── rsitem.py           # RsItem dataclass
-│
-├── tests/
-│   └── ...
-├── example_usage.py
-├── deploy_reports.py
-├── requirements.txt
-├── pyproject.toml
-└── README.md
-```
+### Main Classes & Functions
 
-### Mermaid Diagram
+| Name                                             | Type     | Description                                               |
+| ------------------------------------------------ | -------- | --------------------------------------------------------- |
+| `SSRSRestClient`                                 | Class    | Main client for SSRS REST API                             |
+| &nbsp;&nbsp;• `get_catalog_item`                 | Method   | Get info for a catalog item                               |
+| &nbsp;&nbsp;• `get_catalog_items`                | Method   | List catalog items in a folder                            |
+| &nbsp;&nbsp;• `test_connection`                  | Method   | Test connection to SSRS server                            |
+| `SSRSDataSourceManager`                          | Class    | Data source management (test, set, list, etc.)            |
+| &nbsp;&nbsp;• `get_item_data_sources`            | Method   | List data sources for a catalog item                      |
+| &nbsp;&nbsp;• `test_item_data_source_connection` | Method   | Test all or one data source connection for a catalog item |
+| &nbsp;&nbsp;• `test_data_source_connection`      | Method   | Test a specific data source connection                    |
+| &nbsp;&nbsp;• `set_item_data_source`             | Method   | Set/update data sources for a catalog item                |
+| `SSRSSecurityManager`                            | Class    | Security/permissions management                           |
+| &nbsp;&nbsp;• `get_item_permissions`             | Method   | Get permissions for a catalog item                        |
+| &nbsp;&nbsp;• `set_item_permissions`             | Method   | Set permissions for a catalog item                        |
+| &nbsp;&nbsp;• `get_roles`                        | Method   | List available roles                                      |
+| &nbsp;&nbsp;• `add_group_or_user`                | Method   | Add a group or user to an item                            |
+| &nbsp;&nbsp;• `remove_group_or_user`             | Method   | Remove a group or user from an item                       |
+| &nbsp;&nbsp;• `list_users_and_groups`            | Method   | List users and groups with access                         |
+| `create_credentials_by_user`                     | Function | Helper to create `CredentialsByUser`                      |
+| `create_credentials_in_server`                   | Function | Helper to create `CredentialsInServer`                    |
+| `create_no_credentials`                          | Function | Helper to create `NoCredentials`                          |
 
-```mermaid
-graph TD
-    A[SSRSRestClient] -->|uses| B[SSRSDataSourceManager]
-    A -->|uses| C[RsItem]
-    B -->|uses| D[RsDataSource]
-    D -->|has| E[CredentialsByUser]
-    D -->|has| F[CredentialsInServer]
-    D -->|has| G[NoCredentials]
-    C -->|typed| H[RsItemType]
-    D -->|typed| I[DataSourceType]
-```
+### Types, Enums & Dataclasses
+
+| Name                  | Type      | Description                                      |
+| --------------------- | --------- | ------------------------------------------------ |
+| `RsItem`              | Dataclass | Represents a catalog item (report, folder, etc.) |
+| `RsDataSource`        | Dataclass | Represents a data source                         |
+| `RsItemType`          | Enum      | Catalog item types (Report, Folder, etc.)        |
+| `DataSourceType`      | Enum      | Data source types (SQL, OLEDB, etc.)             |
+| `RsCredentials`       | Dataclass | Base class for credentials                       |
+| `CredentialsByUser`   | Dataclass | User/password credentials                        |
+| `CredentialsInServer` | Dataclass | Credentials stored in server                     |
+| `NoCredentials`       | Dataclass | No credentials                                   |
 
 ---
 
