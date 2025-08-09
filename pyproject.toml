@@ -9,6 +9,9 @@ upload_to_vcs_release = true
 commit_message = "chore(release): v{version} [skip ci]"
 tag_format = "v{version}"
 major_on_zero = false
+# Ajout de la configuration pour le changelog
+changelog_file = "CHANGELOG.md"
+changelog_placeholder = "<!--next-version-placeholder-->"
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
@@ -29,6 +32,9 @@ ignore_token_for_push = false
 dist_glob_patterns = ["dist/*"]
 upload_to_vcs_release = true
 
+[tool.semantic_release.changelog]
+template_dir = "templates"
+changelog_file = "CHANGELOG.md"
 
 [build-system]
 requires = ["setuptools==69.5.1", "requests>=2.31.0", "requests-ntlm>=1.2.0"]
