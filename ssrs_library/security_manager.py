@@ -13,7 +13,7 @@ from .types.security import (
     DataModelRoleAssignment,
     RsPermission,
     RsRoleAssignment,
-    SecurityAuditEntry
+    SecurityAuditEntry,
 )
 
 
@@ -49,7 +49,9 @@ class SSRSSecurityManager:
             report_name_simple = report_path.split("/")[-1]
             # Use a specific folder ID or search in all folders
             id = "0000000-0000-0000-0000-000000000000"
-            catalog_items_url = f"Folders({id})/Model.SearchItems(searchText='{report_name_simple}')"
+            catalog_items_url = (
+                f"Folders({id})/Model.SearchItems(searchText='{report_name_simple}')"
+            )
 
             response = self.client._make_request("GET", catalog_items_url)
 
@@ -187,70 +189,6 @@ class SSRSSecurityManager:
 
         return role_mapping
 
-    def migrate_data_model_role_assignments(
-        self, source_report_path: str, target_report_path: str
-    ) -> bool:
-        """
-        Migrate data model role assignments from source report to target report
-
-        Args:
-            source_report_path: Path to source report
-            target_report_path: Path to target report
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            # Get report IDs
-            source_report_id = self.get_report_id(source_report_path)
-            target_report_id = self.get_report_id(target_report_path)
-
-            if not source_report_id or not target_report_id:
-                logger.error("Could not retrieve one or both report IDs")
-                return False
-
-            # Get roles from both reports
-            source_roles = self.get_data_model_roles(source_report_id)
-            target_roles = self.get_data_model_roles(target_report_id)
-
-            # Create role mapping
-            role_mapping = self.create_role_mapping(source_roles, target_roles)
-
-            # Get assignments from source
-            source_assignments = self.get_data_model_role_assignments(source_report_id)
-
-            # Map assignments using the role mapping
-            mapped_assignments = []
-            for assignment in source_assignments:
-                role_ids_source = assignment.get("DataModelRoles", [])
-                mapped_roles = []
-
-                for source_role_id in role_ids_source:
-                    if source_role_id in role_mapping:
-                        mapped_roles.append(role_mapping[source_role_id])
-                    else:
-                        logger.warning(
-                            f"Role ID '{source_role_id}' from source not mapped to target"
-                        )
-
-                if mapped_roles:  # Only add assignment if we have mapped roles
-                    mapped_assignment = {
-                        "GroupUserName": assignment.get("GroupUserName"),
-                        "DataModelRoles": mapped_roles,
-                    }
-                    mapped_assignments.append(mapped_assignment)
-
-            # Set assignments on target
-            return self.set_data_model_role_assignments(
-                target_report_id, mapped_assignments
-            )
-
-        except Exception as e:
-            logger.error(
-                f"Failed to migrate role assignments from {source_report_path} to {target_report_path}: {str(e)}"
-            )
-            return False
-
     def get_catalog_item_policies(self, item_path: str) -> Optional[Dict[str, Any]]:
         """
         Get security policies for a catalog item
@@ -318,34 +256,6 @@ class SSRSSecurityManager:
 
         except Exception as e:
             logger.error(f"Failed to set policies for {item_path}: {str(e)}")
-            return False
-
-    def migrate_catalog_item_policies(self, source_path: str, target_path: str) -> bool:
-        """
-        Migrate security policies from source catalog item to target catalog item
-
-        Args:
-            source_path: Path to source catalog item
-            target_path: Path to target catalog item
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            # Get policies from source
-            source_policies = self.get_catalog_item_policies(source_path)
-
-            if not source_policies:
-                logger.warning(f"No policies found for source item: {source_path}")
-                return False
-
-            # Set policies on target
-            return self.set_catalog_item_policies(target_path, source_policies)
-
-        except Exception as e:
-            logger.error(
-                f"Failed to migrate policies from {source_path} to {target_path}: {str(e)}"
-            )
             return False
 
     def get_folder_permissions(
