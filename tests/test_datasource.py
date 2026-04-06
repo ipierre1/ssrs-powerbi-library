@@ -157,8 +157,13 @@ class TestToApi(unittest.TestCase):
 
     def test_always_contains_required_keys(self):
         payload = DataSource("D", "S").to_api()
-        for key in ("Name", "ConnectionString", "DataSourceType", "Enabled",
-                    "CredentialRetrieval"):
+        for key in (
+            "Name",
+            "ConnectionString",
+            "DataSourceType",
+            "Enabled",
+            "CredentialRetrieval",
+        ):
             self.assertIn(key, payload)
 
     def test_no_id_when_none(self):
@@ -176,16 +181,21 @@ class TestToApi(unittest.TestCase):
         self.assertEqual(payload["Description"], "desc")
 
     def test_no_credentials_in_server_for_none_retrieval(self):
-        self.assertNotIn("CredentialsInServer",
-                         DataSource("D", "S", credential_retrieval="None").to_api())
+        self.assertNotIn(
+            "CredentialsInServer",
+            DataSource("D", "S", credential_retrieval="None").to_api(),
+        )
 
     def test_no_credentials_in_server_for_integrated(self):
-        self.assertNotIn("CredentialsInServer",
-                         DataSource("D", "S", credential_retrieval="Integrated").to_api())
+        self.assertNotIn(
+            "CredentialsInServer",
+            DataSource("D", "S", credential_retrieval="Integrated").to_api(),
+        )
 
     def test_credentials_in_server_for_store_with_username(self):
         ds = DataSource(
-            "D", "S",
+            "D",
+            "S",
             credential_retrieval="Store",
             username="svc",
             password="pw",

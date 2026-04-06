@@ -48,10 +48,14 @@ class TestProperties(unittest.TestCase):
         self.assertTrue(self.r.has_data_sources)
 
     def test_has_data_sources_missing_defaults_false(self):
-        self.assertFalse(_report({"Id": "x", "Name": "X", "Path": "/X"}).has_data_sources)
+        self.assertFalse(
+            _report({"Id": "x", "Name": "X", "Path": "/X"}).has_data_sources
+        )
 
     def test_description_missing_defaults_empty(self):
-        self.assertEqual(_report({"Id": "x", "Name": "X", "Path": "/X"}).description, "")
+        self.assertEqual(
+            _report({"Id": "x", "Name": "X", "Path": "/X"}).description, ""
+        )
 
     def test_repr_contains_name(self):
         self.assertIn("Monthly Invoices", repr(self.r))
@@ -78,7 +82,8 @@ class TestDataSources(unittest.TestCase):
 
     def _ds_payload(self, name="FinanceDB"):
         return {
-            "Id": "ds-1", "Name": name,
+            "Id": "ds-1",
+            "Name": name,
             "ConnectionString": "Server=y;",
             "DataSourceType": "SQL",
             "Enabled": True,
@@ -286,62 +291,74 @@ class TestAddUser(unittest.TestCase):
     def test_adds_new_user(self):
         self._setup_policies()
         self.r.add_user("CORP\\bob", ["Browser"])
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         policies = put_call[1]["json"]["Policies"]
         self.assertIn("CORP\\bob", [p["GroupUserName"] for p in policies])
 
     def test_new_user_roles_formatted_correctly(self):
         self._setup_policies()
         self.r.add_user("CORP\\bob", ["Browser"])
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         policies = put_call[1]["json"]["Policies"]
         bob = next(p for p in policies if p["GroupUserName"] == "CORP\\bob")
         self.assertEqual(bob["Roles"], [{"RoleName": "Browser"}])
 
     def test_merges_roles_for_existing_user(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.add_user("CORP\\alice", ["Publisher"])
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
-        alice = next(p for p in put_call[1]["json"]["Policies"]
-                     if p["GroupUserName"] == "CORP\\alice")
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
+        alice = next(
+            p
+            for p in put_call[1]["json"]["Policies"]
+            if p["GroupUserName"] == "CORP\\alice"
+        )
         role_names = {r["RoleName"] for r in alice["Roles"]}
         self.assertIn("Browser", role_names)
         self.assertIn("Publisher", role_names)
 
     def test_no_duplicate_roles(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.add_user("CORP\\alice", ["Browser"])
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
-        alice = next(p for p in put_call[1]["json"]["Policies"]
-                     if p["GroupUserName"] == "CORP\\alice")
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
+        alice = next(
+            p
+            for p in put_call[1]["json"]["Policies"]
+            if p["GroupUserName"] == "CORP\\alice"
+        )
         self.assertEqual(
             sum(1 for r in alice["Roles"] if r["RoleName"] == "Browser"), 1
         )
 
     def test_case_insensitive_username(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\Alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\Alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.add_user("corp\\alice", ["Publisher"])
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         self.assertEqual(len(put_call[1]["json"]["Policies"]), 1)
 
     def test_preserves_other_users(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.add_user("CORP\\bob", ["Publisher"])
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         self.assertEqual(len(put_call[1]["json"]["Policies"]), 2)
 
 
@@ -357,42 +374,48 @@ class TestRemoveUser(unittest.TestCase):
         }
 
     def test_removes_existing_user(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]},
-            {"GroupUserName": "CORP\\bob",   "Roles": [{"RoleName": "Publisher"}]},
-        ])
+        self._setup_policies(
+            [
+                {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]},
+                {"GroupUserName": "CORP\\bob", "Roles": [{"RoleName": "Publisher"}]},
+            ]
+        )
         self.r.remove_user("CORP\\alice")
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         usernames = [p["GroupUserName"] for p in put_call[1]["json"]["Policies"]]
         self.assertNotIn("CORP\\alice", usernames)
         self.assertIn("CORP\\bob", usernames)
 
     def test_noop_for_absent_user(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.remove_user("CORP\\nobody")
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         self.assertEqual(len(put_call[1]["json"]["Policies"]), 1)
 
     def test_case_insensitive_removal(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\Alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\Alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.remove_user("corp\\alice")
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         self.assertEqual(put_call[1]["json"]["Policies"], [])
 
     def test_empty_policies_after_removing_last_user(self):
-        self._setup_policies([
-            {"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}
-        ])
+        self._setup_policies(
+            [{"GroupUserName": "CORP\\alice", "Roles": [{"RoleName": "Browser"}]}]
+        )
         self.r.remove_user("CORP\\alice")
-        put_call = [c for c in self.r._client._request.call_args_list
-                    if c[0][0] == "PUT"][0]
+        put_call = [
+            c for c in self.r._client._request.call_args_list if c[0][0] == "PUT"
+        ][0]
         self.assertEqual(put_call[1]["json"]["Policies"], [])
 
 

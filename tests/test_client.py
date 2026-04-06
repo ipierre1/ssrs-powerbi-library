@@ -58,7 +58,9 @@ class TestPBIRSClientInit(unittest.TestCase):
         self.assertEqual(PBIRSClient("http://srv/reports")._timeout, 30)
 
     def test_custom_verify_ssl(self):
-        self.assertFalse(PBIRSClient("http://srv/reports", verify_ssl=False)._verify_ssl)
+        self.assertFalse(
+            PBIRSClient("http://srv/reports", verify_ssl=False)._verify_ssl
+        )
 
     def test_custom_timeout(self):
         self.assertEqual(PBIRSClient("http://srv/reports", timeout=60)._timeout, 60)
@@ -214,7 +216,10 @@ class TestFolderMethods(unittest.TestCase):
 
     def test_create_folder_posts_correct_payload(self):
         self.mock.return_value = {
-            "Id": "f-2", "Name": "2025", "Path": "/Sales/2025", "Description": "FY"
+            "Id": "f-2",
+            "Name": "2025",
+            "Path": "/Sales/2025",
+            "Description": "FY",
         }
         folder = self.client.create_folder("/Sales/2025", description="FY")
         self.assertIsInstance(folder, Folder)
@@ -228,10 +233,22 @@ class TestFolderMethods(unittest.TestCase):
     def test_list_folders_returns_only_folders(self):
         self.mock.side_effect = [
             FOLDER_DATA,  # get_folder call
-            {"value": [
-                {"Id": "f-2", "Name": "Sub", "Path": "/Sales/Sub", "Type": "Folder"},
-                {"Id": "r-1", "Name": "Rep", "Path": "/Sales/Rep", "Type": "PowerBIReport"},
-            ]},
+            {
+                "value": [
+                    {
+                        "Id": "f-2",
+                        "Name": "Sub",
+                        "Path": "/Sales/Sub",
+                        "Type": "Folder",
+                    },
+                    {
+                        "Id": "r-1",
+                        "Name": "Rep",
+                        "Path": "/Sales/Rep",
+                        "Type": "PowerBIReport",
+                    },
+                ]
+            },
         ]
         result = self.client.list_folders("/Sales")
         self.assertEqual(len(result), 1)
@@ -276,10 +293,17 @@ class TestPowerBIReportMethods(unittest.TestCase):
     def test_list_powerbi_reports_by_folder_filters_type(self):
         self.mock.side_effect = [
             FOLDER_DATA,
-            {"value": [
-                {**REPORT_DATA, "Type": "PowerBIReport"},
-                {"Id": "f-2", "Name": "Sub", "Path": "/Sales/Sub", "Type": "Folder"},
-            ]},
+            {
+                "value": [
+                    {**REPORT_DATA, "Type": "PowerBIReport"},
+                    {
+                        "Id": "f-2",
+                        "Name": "Sub",
+                        "Path": "/Sales/Sub",
+                        "Type": "Folder",
+                    },
+                ]
+            },
         ]
         reports = self.client.list_powerbi_reports("/Sales")
         self.assertEqual(len(reports), 1)
@@ -325,7 +349,7 @@ class TestPowerBIReportMethods(unittest.TestCase):
     @patch("ssrs_library.client._MULTIPART_THRESHOLD", 10)
     def test_upload_large_pbix_calls_multipart(self):
         with tempfile.NamedTemporaryFile(suffix=".pbix", delete=False) as f:
-            f.write(b"\x00" * 50)   # 50 bytes > patched threshold of 10
+            f.write(b"\x00" * 50)  # 50 bytes > patched threshold of 10
             tmp = f.name
         try:
             with patch.object(
@@ -345,7 +369,7 @@ class TestPowerBIReportMethods(unittest.TestCase):
             f.write(b"\x00" * 10)
             tmp = f.name
         try:
-            report = self.client.upload_powerbi_report(
+            self.client.upload_powerbi_report(
                 "/Sales", tmp, name="Revenue", overwrite=True
             )
             # Second call should be a PATCH
@@ -383,10 +407,17 @@ class TestPaginatedReportMethods(unittest.TestCase):
         folder_data = {"Id": "ff-1", "Name": "Finance", "Path": "/Finance"}
         self.mock.side_effect = [
             folder_data,
-            {"value": [
-                {**RDL_DATA, "Type": "Report"},
-                {"Id": "f-2", "Name": "Sub", "Path": "/Finance/Sub", "Type": "Folder"},
-            ]},
+            {
+                "value": [
+                    {**RDL_DATA, "Type": "Report"},
+                    {
+                        "Id": "f-2",
+                        "Name": "Sub",
+                        "Path": "/Finance/Sub",
+                        "Type": "Folder",
+                    },
+                ]
+            },
         ]
         reports = self.client.list_paginated_reports("/Finance")
         self.assertEqual(len(reports), 1)

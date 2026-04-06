@@ -39,7 +39,9 @@ class TestDaily(unittest.TestCase):
         self.assertIn("T06:00:00", _defn(Schedule.daily(hour=6))["StartDateTime"])
 
     def test_custom_minute(self):
-        self.assertIn("T02:30:00", _defn(Schedule.daily(hour=2, minute=30))["StartDateTime"])
+        self.assertIn(
+            "T02:30:00", _defn(Schedule.daily(hour=2, minute=30))["StartDateTime"]
+        )
 
     def test_custom_interval(self):
         self.assertEqual(
@@ -106,7 +108,9 @@ class TestWeekly(unittest.TestCase):
         self.assertFalse(days["Tuesday"])
 
     def test_multiple_days(self):
-        days = _rec(Schedule.weekly(["Monday", "Friday"]))["WeeklyRecurrence"]["DaysOfWeek"]
+        days = _rec(Schedule.weekly(["Monday", "Friday"]))["WeeklyRecurrence"][
+            "DaysOfWeek"
+        ]
         self.assertTrue(days["Monday"])
         self.assertTrue(days["Friday"])
         self.assertFalse(days["Wednesday"])
@@ -124,16 +128,22 @@ class TestWeekly(unittest.TestCase):
         self.assertEqual(rec["WeeksInterval"], "2")
 
     def test_case_insensitive_days(self):
-        days = _rec(Schedule.weekly(["monday", "FRIDAY"]))["WeeklyRecurrence"]["DaysOfWeek"]
+        days = _rec(Schedule.weekly(["monday", "FRIDAY"]))["WeeklyRecurrence"][
+            "DaysOfWeek"
+        ]
         self.assertTrue(days["Monday"])
         self.assertTrue(days["Friday"])
 
     def test_custom_hour(self):
-        self.assertIn("T08:00:00", _defn(Schedule.weekly(["Monday"], hour=8))["StartDateTime"])
+        self.assertIn(
+            "T08:00:00", _defn(Schedule.weekly(["Monday"], hour=8))["StartDateTime"]
+        )
 
     def test_custom_minute(self):
-        self.assertIn("T08:30:00",
-                      _defn(Schedule.weekly(["Monday"], hour=8, minute=30))["StartDateTime"])
+        self.assertIn(
+            "T08:30:00",
+            _defn(Schedule.weekly(["Monday"], hour=8, minute=30))["StartDateTime"],
+        )
 
     def test_empty_days_raises(self):
         with self.assertRaises(ValueError):
@@ -180,24 +190,25 @@ class TestMonthly(unittest.TestCase):
         self.assertEqual(set(months.keys()), set(_ALL_MONTHS))
 
     def test_specific_months(self):
-        months = _rec(
-            Schedule.monthly(months=["January", "July"])
-        )["MonthlyRecurrence"]["MonthsOfYear"]
+        months = _rec(Schedule.monthly(months=["January", "July"]))[
+            "MonthlyRecurrence"
+        ]["MonthsOfYear"]
         self.assertTrue(months["January"])
         self.assertTrue(months["July"])
         self.assertFalse(months["February"])
         self.assertFalse(months["December"])
 
     def test_case_insensitive_months(self):
-        months = _rec(
-            Schedule.monthly(months=["january", "JULY"])
-        )["MonthlyRecurrence"]["MonthsOfYear"]
+        months = _rec(Schedule.monthly(months=["january", "JULY"]))[
+            "MonthlyRecurrence"
+        ]["MonthsOfYear"]
         self.assertTrue(months["January"])
         self.assertTrue(months["July"])
 
     def test_custom_hour_minute(self):
-        self.assertIn("T03:15:00",
-                      _defn(Schedule.monthly(hour=3, minute=15))["StartDateTime"])
+        self.assertIn(
+            "T03:15:00", _defn(Schedule.monthly(hour=3, minute=15))["StartDateTime"]
+        )
 
     def test_day_1_allowed(self):
         Schedule.monthly(day=1)  # should not raise
@@ -254,7 +265,9 @@ class TestToApiStructure(unittest.TestCase):
         )
 
     def test_start_datetime_is_parseable_iso8601(self):
-        dt_str = Schedule.daily(hour=6, minute=30).to_api()["Definition"]["StartDateTime"]
+        dt_str = Schedule.daily(hour=6, minute=30).to_api()["Definition"][
+            "StartDateTime"
+        ]
         parsed = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S")
         self.assertEqual(parsed.hour, 6)
         self.assertEqual(parsed.minute, 30)
@@ -266,7 +279,9 @@ class TestToApiStructure(unittest.TestCase):
         self.assertIsInstance(rec["DailyRecurrence"]["DaysInterval"], str)
 
     def test_weekly_interval_is_string(self):
-        rec = Schedule.weekly(["Monday"], interval=2).to_api()["Definition"]["Recurrence"]
+        rec = Schedule.weekly(["Monday"], interval=2).to_api()["Definition"][
+            "Recurrence"
+        ]
         self.assertIsInstance(rec["WeeklyRecurrence"]["WeeksInterval"], str)
 
     def test_monthly_day_is_string(self):
@@ -274,14 +289,16 @@ class TestToApiStructure(unittest.TestCase):
         self.assertIsInstance(rec["MonthlyRecurrence"]["Days"], str)
 
     def test_days_of_week_values_are_booleans(self):
-        days = (Schedule.weekly(["Monday"]).to_api()["Definition"]["Recurrence"]
-                ["WeeklyRecurrence"]["DaysOfWeek"])
+        days = Schedule.weekly(["Monday"]).to_api()["Definition"]["Recurrence"][
+            "WeeklyRecurrence"
+        ]["DaysOfWeek"]
         for v in days.values():
             self.assertIsInstance(v, bool)
 
     def test_months_of_year_values_are_booleans(self):
-        months = (Schedule.monthly().to_api()["Definition"]["Recurrence"]
-                  ["MonthlyRecurrence"]["MonthsOfYear"])
+        months = Schedule.monthly().to_api()["Definition"]["Recurrence"][
+            "MonthlyRecurrence"
+        ]["MonthsOfYear"]
         for v in months.values():
             self.assertIsInstance(v, bool)
 
