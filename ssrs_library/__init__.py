@@ -1,10 +1,24 @@
-from .ssrs_library import *
-from .datasource_manager import SSRSDataSourceManager
-from .credential_manager import (
-    create_credentials_by_user,
-    create_credentials_in_server,
-    create_no_credentials,
-)
-from .security_manager import *
+from .client import PBIRSClient
+from ._datasource import DataSource
+from ._schedule import Schedule
+from ._powerbi_report import PowerBIReport
+from ._paginated_report import PaginatedReport
+from ._folder import Folder
+from ._cache_refresh_plan import CacheRefreshPlan
+from .exceptions import PBIRSError, PBIRSNotFound, PBIRSConflict, PBIRSAuthError
 
 __version__ = "1.2.0"
+
+__all__ = [
+    "PBIRSClient",
+    "DataSource",
+    "Schedule",
+    "PowerBIReport",
+    "PaginatedReport",
+    "Folder",
+    "CacheRefreshPlan",
+    "PBIRSError",
+    "PBIRSNotFound",
+    "PBIRSConflict",
+    "PBIRSAuthError",
+]

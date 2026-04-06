@@ -1,114 +1,197 @@
 """
-Example script for deploying SSRS reports
+CI/CD deployment script for PBIRS reports.
+
+Typical pipeline usage:
+
+    # GitLab CI / GitHub Actions environment variables:
+    #   PBIRS_URL, PBIRS_USERNAME, PBIRS_PASSWORD, PBIRS_DOMAIN
+
+    python examples/deploy_reports.py
+
+The script:
+  1. Connects to the PBIRS server.
+  2. Ensures the target folder exists (creates it if missing).
+  3. Uploads every .pbix and .rdl file found in a local directory.
+  4. Applies environment-specific data source settings.
+  5. Sets data model parameters.
+  6. Creates (or replaces) a daily cache-refresh plan on each Power BI report.
 """
 
 import os
-import json
+import sys
 from pathlib import Path
-from ssrs_library import SSRSRestClient, SSRSDataSourceManager, RsDataSource
-from typing import Dict, List
 
-class SSRSDeploymentManager:
-    """Manager for SSRS report deployments"""
-    
-    def __init__(self, client: SSRSRestClient):
-        self.client = client
-        self.ds_manager = SSRSDataSourceManager(client)
-    
-    def deploy_reports_from_config(self, config_file: str) -> bool:
-        """
-        Deploy reports based on configuration file
-        
-        Args:
-            config_file: Path to deployment configuration JSON file
-            
-        Returns:
-            True if all deployments successful
-        """
-        
-        with open(config_file, 'r') as f:
-            config = json.load(f)
-        
-        success = True
-        
-        for deployment in config.get('deployments', []):
-            report_path = deployment['report_path']
-            data_sources = deployment.get('data_sources', [])
-            
-            print(f"📦 Deploying: {report_path}")
-            
-            # Update data sources if specified
-            if data_sources:
-                ds_objects = []
-                for ds_config in data_sources:
-                    ds = RsDataSource(
-                        name=ds_config['name'],
-                        data_source_type=ds_config['type'],
-                        connection_string=ds_config['connection_string'],
-                        enabled=ds_config.get('enabled', True)
-                    )
-                    ds_objects.append(ds)
-                
-                if not self.ds_manager.set_item_data_source(report_path, ds_objects):
-                    print(f"❌ Failed to update data sources for {report_path}")
-                    success = False
-                    continue
-            
-            # Test data sources after deployment
-            results = self.ds_manager.test_item_data_source_connection(report_path)
-            
-            all_ds_ok = all(results.values()) if results else True
-            
-            if all_ds_ok:
-                print(f"✅ Successfully deployed: {report_path}")
-            else:
-                print(f"⚠️  Deployed with data source issues: {report_path}")
-                success = False
-        
-        return success
+from ssrs_library import PBIRSClient, DataSource, Schedule
+from ssrs_library.exceptions import PBIRSNotFound, PBIRSConflict
 
 
-def main():
-    """Main deployment function"""
-    
-    # Get configuration from environment
-    server_url = os.getenv('SSRS_SERVER_URL')
-    username = os.getenv('SSRS_USERNAME') 
-    password = os.getenv('SSRS_PASSWORD')
-    domain = os.getenv('SSRS_DOMAIN')
-    
-    config_file = os.getenv('SSRS_DEPLOY_CONFIG', 'deployment_config.json')
-    
-    if not all([server_url, username, password]):
-        print("❌ Missing required environment variables")
-        exit(1)
-    
-    if not Path(config_file).exists():
-        print(f"❌ Configuration file not found: {config_file}")
-        exit(1)
-    
-    # Initialize client
-    client = SSRSRestClient(
-        server_url=server_url,
-        username=username,
-        password=password,
-        domain=domain
+# ------------------------------------------------------------------
+# Configuration — adapt these values or drive them from env vars.
+# ------------------------------------------------------------------
+REPORTS_DIR = Path("./reports")          # local folder containing .pbix / .rdl
+TARGET_FOLDER = "/Sales/Deployed"        # destination catalog folder
+OVERWRITE = True                         # replace existing reports
+
+# Data source to apply to every uploaded Power BI report
+DATASOURCE = DataSource(
+    name="SalesDB",
+    connection_string=(
+        f"Data Source={os.getenv('DB_SERVER', 'prod-srv')};"
+        f"Initial Catalog={os.getenv('DB_NAME', 'Sales')}"
+    ),
+    data_source_type="SQL",
+    credential_retrieval="Store",
+    username=os.getenv("DB_USERNAME", "svc_report"),
+    password=os.getenv("DB_PASSWORD", ""),
+    windows_credentials=True,
+)
+
+# Data model parameters to apply to every uploaded Power BI report
+DATA_MODEL_PARAMS = [
+    {"Name": "Environment", "Value": os.getenv("ENV_NAME", "Production")},
+]
+
+# Cache-refresh schedule for Power BI reports
+REFRESH_SCHEDULE = Schedule.daily(hour=2)   # every night at 02:00
+
+
+# ------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------
+
+def ensure_folder(client: PBIRSClient, path: str) -> None:
+    """Create *path* (and any missing parent folders) if it doesn't exist."""
+    parts = [p for p in path.strip("/").split("/") if p]
+    current = ""
+    for part in parts:
+        current += f"/{part}"
+        try:
+            client.get_folder(current)
+        except PBIRSNotFound:
+            try:
+                client.create_folder(current)
+                print(f"  [folder created] {current}")
+            except PBIRSConflict:
+                pass  # race condition — already exists
+
+
+def deploy_pbix(client: PBIRSClient, file: Path, folder: str) -> None:
+    """Upload a .pbix file then apply datasource, parameters and schedule."""
+    print(f"\n  Deploying Power BI report: {file.name}")
+
+    report = client.upload_powerbi_report(
+        folder_path=folder,
+        file_path=str(file),
+        name=file.stem,
+        overwrite=OVERWRITE,
     )
-    
+    print(f"    Uploaded → {report.path}")
+
+    # Data source
+    try:
+        report.set_datasources([DATASOURCE])
+        print("    Data source updated.")
+    except Exception as exc:
+        print(f"    WARNING: could not set datasource — {exc}")
+
+    # Data model parameters
+    try:
+        report.set_data_model_parameters(DATA_MODEL_PARAMS)
+        print("    Data model parameters updated.")
+    except Exception as exc:
+        print(f"    WARNING: could not set parameters — {exc}")
+
+    # Cache-refresh plan — drop existing plans and create a fresh one.
+    try:
+        for existing_plan in report.get_cache_refresh_plans():
+            existing_plan.delete()
+        plan = report.create_cache_refresh_plan(
+            description=f"Auto — deployed by CI/CD pipeline",
+            schedule=REFRESH_SCHEDULE,
+        )
+        print(f"    Cache-refresh plan created ({plan.id}).")
+    except Exception as exc:
+        print(f"    WARNING: could not set cache-refresh plan — {exc}")
+
+
+def deploy_rdl(client: PBIRSClient, file: Path, folder: str) -> None:
+    """Upload a .rdl file."""
+    print(f"\n  Deploying paginated report: {file.name}")
+
+    report = client.upload_paginated_report(
+        folder_path=folder,
+        file_path=str(file),
+        name=file.stem,
+        overwrite=OVERWRITE,
+    )
+    print(f"    Uploaded → {report.path}")
+
+
+# ------------------------------------------------------------------
+# Main
+# ------------------------------------------------------------------
+
+def main() -> None:
+    # Connect
+    client = PBIRSClient(
+        base_url=os.environ["PBIRS_URL"],
+        username=os.environ["PBIRS_USERNAME"],
+        password=os.environ["PBIRS_PASSWORD"],
+        domain=os.getenv("PBIRS_DOMAIN"),
+        verify_ssl=os.getenv("PBIRS_VERIFY_SSL", "true").lower() != "false",
+    )
+
     if not client.test_connection():
-        print("❌ Failed to connect to SSRS server")
-        exit(1)
-    
-    print("✅ Connected to SSRS server")
-    
-    # Deploy reports
-    deploy_manager = SSRSDeploymentManager(client)
-    
-    if deploy_manager.deploy_reports_from_config(config_file):
-        print("🎉 All deployments completed successfully")
-    else:
-        print("💥 Some deployments failed")
-        exit(1)
+        print("ERROR: Cannot reach the PBIRS server.")
+        sys.exit(1)
+
+    print(f"Connected to {client}")
+
+    # Ensure the target folder exists
+    print(f"\nEnsuring folder: {TARGET_FOLDER}")
+    ensure_folder(client, TARGET_FOLDER)
+
+    # Collect report files
+    if not REPORTS_DIR.is_dir():
+        print(f"ERROR: Reports directory not found: {REPORTS_DIR}")
+        sys.exit(1)
+
+    pbix_files = sorted(REPORTS_DIR.glob("*.pbix"))
+    rdl_files = sorted(REPORTS_DIR.glob("*.rdl"))
+
+    if not pbix_files and not rdl_files:
+        print("No .pbix or .rdl files found — nothing to deploy.")
+        sys.exit(0)
+
+    print(f"\nFound {len(pbix_files)} .pbix and {len(rdl_files)} .rdl file(s).")
+
+    errors: list[str] = []
+
+    for file in pbix_files:
+        try:
+            deploy_pbix(client, file, TARGET_FOLDER)
+        except Exception as exc:
+            msg = f"{file.name}: {exc}"
+            print(f"    ERROR: {msg}")
+            errors.append(msg)
+
+    for file in rdl_files:
+        try:
+            deploy_rdl(client, file, TARGET_FOLDER)
+        except Exception as exc:
+            msg = f"{file.name}: {exc}"
+            print(f"    ERROR: {msg}")
+            errors.append(msg)
+
+    # Summary
+    total = len(pbix_files) + len(rdl_files)
+    print(f"\nDeployment complete — {total - len(errors)}/{total} succeeded.")
+
+    if errors:
+        print("Failures:")
+        for err in errors:
+            print(f"  - {err}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
