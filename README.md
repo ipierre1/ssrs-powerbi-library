@@ -2,7 +2,7 @@
 
 A Python library for automating Power BI Report Server (PBIRS) and SQL Server Reporting Services (SSRS) via the REST API v2.0. Designed to replace PowerShell `ReportingServicesTools` in CI/CD pipelines.
 
-**Repository:** [atlas-bi/ssrs-powerbi-library](https://github.com/atlas-bi/ssrs-powerbi-library)
+**Repository:** [ipierre1/ssrs-powerbi-library](https://github.com/ipierre1/ssrs-powerbi-library)
 
 ---
 
@@ -29,7 +29,7 @@ pip install ssrs-powerbi-library
 Or from source:
 
 ```bash
-git clone https://github.com/atlas-bi/ssrs-powerbi-library.git
+git clone https://github.com/ipierre1/ssrs-powerbi-library.git
 cd ssrs-powerbi-library
 pip install -e .
 ```
