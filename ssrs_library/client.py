@@ -315,12 +315,12 @@ class PBIRSClient:
             "Description": "",
         }
         if overwrite:
-            # Fetch existing report to get its ID and PATCH it.
+            # Fetch existing report to get its ID and PUT it.
             target_path = f"{folder_path}/{name}"
             try:
                 existing = self.get_powerbi_report(target_path)
                 data = self._request(
-                    "PATCH", f"PowerBIReports({existing.id})", json=payload
+                    "PUT", f"PowerBIReports({existing.id})", json=payload
                 )
                 return data or existing._data
             except PBIRSNotFound:
@@ -408,7 +408,7 @@ class PBIRSClient:
             try:
                 existing = self.get_paginated_report(target_path)
                 data = self._request(
-                    "PATCH", f"Reports({existing.id})", json=payload
+                    "PUT", f"Reports({existing.id})", json=payload
                 )
                 return PaginatedReport(self, data or existing._data)
             except PBIRSNotFound:
