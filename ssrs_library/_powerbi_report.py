@@ -6,6 +6,10 @@ from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 if TYPE_CHECKING:
     from .client import PBIRSClient
 
+from ._datasource import DataSource
+from ._cache_refresh_plan import CacheRefreshPlan
+from ._schedule import Schedule
+
 logger = logging.getLogger(__name__)
 
 _REDACT_KEYS = {"Secret", "Password", "secret", "password"}
@@ -17,10 +21,6 @@ def _redact(obj: Any) -> Any:
     if isinstance(obj, list):
         return [_redact(i) for i in obj]
     return obj
-
-from ._datasource import DataSource
-from ._cache_refresh_plan import CacheRefreshPlan
-from ._schedule import Schedule
 
 
 class PowerBIReport:
