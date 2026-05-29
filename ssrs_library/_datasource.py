@@ -33,6 +33,8 @@ class DataSource:
         username: Optional[str] = None,
         password: Optional[str] = None,
         windows_credentials: bool = True,
+        # "DataModel" for Power BI (.pbix) datasources, None for paginated (.rdl)
+        data_source_sub_type: Optional[str] = None,
     ):
         self.id = id
         self.name = name
@@ -44,6 +46,7 @@ class DataSource:
         self.username = username
         self.password = password
         self.windows_credentials = windows_credentials
+        self.data_source_sub_type = data_source_sub_type
 
     # ------------------------------------------------------------------
     # Serialisation helpers
@@ -51,9 +54,31 @@ class DataSource:
 
     @classmethod
     def from_api(cls, data: Dict[str, Any]) -> "DataSource":
+        sub_type = data.get("DataSourceSubType")
+
+        if sub_type == "DataModel":
+            dm = data.get("DataModelDataSource") or {}
+            auth_type = dm.get("AuthType", "Windows")
+            # Key auth has no username/password pair in the traditional sense
+            win_creds = auth_type in ("Windows", "Impersonate")
+            cred_retrieval = "None" if auth_type == "Key" else "Store"
+            return cls(
+                id=data.get("Id"),
+                name=data.get("Name", ""),
+                description=data.get("Description"),
+                connection_string=data.get("ConnectionString", ""),
+                data_source_type=data.get("DataSourceType", ""),
+                enabled=data.get("Enabled", True),
+                credential_retrieval=cred_retrieval,
+                username=dm.get("Username"),
+                password=dm.get("Secret"),
+                windows_credentials=win_creds,
+                data_source_sub_type="DataModel",
+            )
+
+        # Standard paginated-report / shared-dataset datasource
         cred_retrieval = data.get("CredentialRetrieval", "None")
         cred_in_server = data.get("CredentialsInServer") or {}
-
         return cls(
             id=data.get("Id"),
             name=data.get("Name", ""),
@@ -68,7 +93,26 @@ class DataSource:
         )
 
     def to_api(self) -> Dict[str, Any]:
-        payload: Dict[str, Any] = {
+        if self.data_source_sub_type == "DataModel":
+            # PBIRS expects DataModelDataSource format for Power BI reports (PATCH)
+            # AuthType: Windows (stored Windows creds) or UsernamePassword (SQL/Basic)
+            auth_type = "Windows" if self.windows_credentials else "UsernamePassword"
+            payload: Dict[str, Any] = {
+                "Name": self.name,
+                "ConnectionString": self.connection_string,
+                "DataSourceSubType": "DataModel",
+                "DataModelDataSource": {
+                    "AuthType": auth_type,
+                    "Username": self.username,
+                    "Secret": self.password,
+                },
+            }
+            if self.id:
+                payload["Id"] = self.id
+            return payload
+
+        # Standard paginated-report format (PUT)
+        payload = {
             "Name": self.name,
             "ConnectionString": self.connection_string,
             "DataSourceType": self.data_source_type,
