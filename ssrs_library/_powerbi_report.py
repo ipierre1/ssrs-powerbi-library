@@ -77,7 +77,7 @@ class PowerBIReport:
         """
         payload = [ds.to_api() for ds in datasources]
         self._client._request(
-            "PUT", f"PowerBIReports({self.id})/DataSources", json=payload
+            "PATCH", f"PowerBIReports({self.id})/DataSources", json=payload
         )
 
     # ------------------------------------------------------------------
@@ -111,7 +111,7 @@ class PowerBIReport:
             ])
         """
         self._client._request(
-            "PUT",
+            "POST",
             f"PowerBIReports({self.id})/DataModelParameters",
             json=parameters,
         )

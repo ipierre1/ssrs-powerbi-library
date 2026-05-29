@@ -115,7 +115,7 @@ class TestDataSources(unittest.TestCase):
         ds = DataSource("MyDB", "Server=x;")
         self.r.set_datasources([ds])
         self.r._client._request.assert_called_once_with(
-            "PUT", "PowerBIReports(r-1)/DataSources", json=[ds.to_api()]
+            "PATCH", "PowerBIReports(r-1)/DataSources", json=[ds.to_api()]
         )
 
     def test_set_multiple_datasources(self):
@@ -162,7 +162,7 @@ class TestDataModelParameters(unittest.TestCase):
         ]
         self.r.set_data_model_parameters(params)
         self.r._client._request.assert_called_once_with(
-            "PUT", "PowerBIReports(r-1)/DataModelParameters", json=params
+            "POST", "PowerBIReports(r-1)/DataModelParameters", json=params
         )
 
 
