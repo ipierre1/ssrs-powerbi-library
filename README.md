@@ -419,7 +419,7 @@ pip install pytest
 pytest tests/ -v
 ```
 
-All tests use `unittest.mock` — no live server required.
+All tests use `unittest.mock`, no live server required.
 
 ---
 
