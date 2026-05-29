@@ -363,7 +363,7 @@ class TestPowerBIReportMethods(unittest.TestCase):
 
     def test_upload_pbix_overwrite_patches_existing(self):
         existing_data = {**REPORT_DATA, "Id": "r-existing"}
-        # Calls: get_powerbi_report (GET), PATCH
+        # Calls: get_powerbi_report (GET), PUT
         self.mock.side_effect = [existing_data, existing_data]
         with tempfile.NamedTemporaryFile(suffix=".pbix", delete=False) as f:
             f.write(b"\x00" * 10)
@@ -372,9 +372,9 @@ class TestPowerBIReportMethods(unittest.TestCase):
             self.client.upload_powerbi_report(
                 "/Sales", tmp, name="Revenue", overwrite=True
             )
-            # Second call should be a PATCH
+            # Second call should be a PUT
             patch_call = self.mock.call_args_list[1]
-            self.assertEqual(patch_call[0][0], "PATCH")
+            self.assertEqual(patch_call[0][0], "PUT")
         finally:
             os.unlink(tmp)
 
@@ -469,7 +469,7 @@ class TestPaginatedReportMethods(unittest.TestCase):
                 "/Finance", tmp, name="Monthly", overwrite=True
             )
             patch_call = self.mock.call_args_list[1]
-            self.assertEqual(patch_call[0][0], "PATCH")
+            self.assertEqual(patch_call[0][0], "PUT")
         finally:
             os.unlink(tmp)
 
