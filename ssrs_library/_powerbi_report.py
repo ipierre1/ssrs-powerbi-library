@@ -1,7 +1,22 @@
+import copy
+import json
+import logging
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .client import PBIRSClient
+
+logger = logging.getLogger(__name__)
+
+_REDACT_KEYS = {"Secret", "Password", "secret", "password"}
+
+
+def _redact(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: ("***" if k in _REDACT_KEYS else _redact(v)) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_redact(i) for i in obj]
+    return obj
 
 from ._datasource import DataSource
 from ._cache_refresh_plan import CacheRefreshPlan
@@ -67,7 +82,9 @@ class PowerBIReport:
         data = self._client._request(
             "GET", f"PowerBIReports({self.id})/DataSources"
         )
-        return [DataSource.from_api(ds) for ds in data.get("value", [])]
+        sources = data.get("value", [])
+        logger.debug("GET datasources raw: %s", json.dumps(sources, indent=2))
+        return [DataSource.from_api(ds) for ds in sources]
 
     def set_datasources(self, datasources: List[DataSource]) -> None:
         """
@@ -76,6 +93,7 @@ class PowerBIReport:
         :param datasources: List of :class:`DataSource` objects.
         """
         payload = [ds.to_api() for ds in datasources]
+        logger.debug("PATCH datasources payload: %s", json.dumps(_redact(payload), indent=2))
         self._client._request(
             "PATCH", f"PowerBIReports({self.id})/DataSources", json=payload
         )

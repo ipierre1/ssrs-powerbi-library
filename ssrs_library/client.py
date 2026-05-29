@@ -109,7 +109,8 @@ class PBIRSClient:
         try:
             resp.raise_for_status()
         except requests.HTTPError as exc:
-            raise PBIRSError(str(exc), status_code=resp.status_code) from exc
+            body = resp.text[:500] if resp.text else ""
+            raise PBIRSError(f"{exc} — {body}", status_code=resp.status_code) from exc
 
         if resp.status_code == 204 or not resp.content:
             return None
