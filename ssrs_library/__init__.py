@@ -7,7 +7,7 @@ from ._folder import Folder
 from ._cache_refresh_plan import CacheRefreshPlan
 from .exceptions import PBIRSError, PBIRSNotFound, PBIRSConflict, PBIRSAuthError
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 __all__ = [
     "PBIRSClient",

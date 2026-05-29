@@ -36,13 +36,16 @@ upload_to_vcs_release = true
 template_dir = "templates"
 changelog_file = "CHANGELOG.md"
 
+
+[tool.setuptools]
+license-files = []
 [build-system]
 requires = ["setuptools==69.5.1", "requests>=2.31.0", "requests-ntlm>=1.2.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ssrs-powerbi-library"
-version = "1.2.1"
+version = "1.2.2"
 authors = [
   { name="ipierre1", email="59824069+ipierre1@users.noreply.github.com" },
 ]
@@ -65,5 +68,3 @@ classifiers = [
 Homepage = "https://github.com/ipierre1/ssrs-powerbi-library"
 Issues = "https://github.com/ipierre1/ssrs-powerbi-library/issues"
 
-[tool.setuptools]
-license-files = []
