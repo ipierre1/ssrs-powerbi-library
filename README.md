@@ -1,4 +1,4 @@
-# ssrs-powerbi-library
+# ssrs powerbi library
 
 A Python library for automating Power BI Report Server (PBIRS) and SQL Server Reporting Services (SSRS) via the REST API v2.0. Designed to replace PowerShell `ReportingServicesTools` in CI/CD pipelines.
 
