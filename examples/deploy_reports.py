@@ -87,9 +87,18 @@ def deploy_pbix(client: PBIRSClient, file: Path, folder: str) -> None:
     )
     print(f"    Uploaded → {report.path}")
 
-    # Data source
+    # Data source — read-modify-write so the full server payload is preserved.
+    # Replacing datasources with a manually-constructed object drops required
+    # fields and causes 400 errors.
     try:
-        report.set_datasources([DATASOURCE])
+        current_sources = report.get_datasources()
+        for ds in current_sources:
+            ds.connection_string = DATASOURCE.connection_string
+            ds.credential_retrieval = DATASOURCE.credential_retrieval
+            ds.username = DATASOURCE.username
+            ds.password = DATASOURCE.password
+            ds.windows_credentials = DATASOURCE.windows_credentials
+        report.set_datasources(current_sources)
         print("    Data source updated.")
     except Exception as exc:
         print(f"    WARNING: could not set datasource — {exc}")
